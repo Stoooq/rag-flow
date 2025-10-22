@@ -27,7 +27,7 @@ def expand_query(query: str, expand_to_n: int, provider: str = "ollama", model_n
     return queries
 
 
-def call_llm(query: str, documents: list[tuple], provider: str = "ollama",
+def call_llm(query: str, documents: list[dict], provider: str = "ollama",
              model_name: Optional[str] = None, api_key: Optional[str] = None) -> str:
     llm = get_llm_provider(provider, model_name, temperature=0.0, api_key=api_key)
     prompt = RAGPromptTemplate.create_prompt(query, documents)

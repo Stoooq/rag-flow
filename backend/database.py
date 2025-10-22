@@ -25,22 +25,26 @@ class Database:
         finally:
             conn.close()
 
-    def add_document(self, table: str, content: list[str], embedding: list[list[float]]):
+    def add_document(self, table: str, title: list[str], content: list[str], page_url: list[str], embedding: list[list[float]]):
         with self.connect() as conn:
             with conn.cursor() as cur:
                 query = f"""
-                INSERT INTO {table} (content, embedding) VALUES (%s, %s)
+                INSERT INTO {table} (title, content, page_url, embedding) VALUES (%s, %s, %s, %s)
                 """
-                cur.execute(query, (content, embedding))
+                cur.execute(query, (title, content, page_url, embedding))
                 conn.commit()
 
-    def add_documents(self, table: str, contents: list[str], embeddings: list[list[float]]):
+    def add_documents(self, table: str, titles: list[str], contents: list[str], page_urls: list[str], embeddings: list[list[float]]):
         with self.connect() as conn:
             with conn.cursor() as cur:
                 query = f"""
-                INSERT INTO {table} (content, embedding) VALUES (%s, %s)
+                INSERT INTO {table} (title, content, page_url, embedding) VALUES (%s, %s, %s, %s)
                 """
-                cur.executemany(query, list(zip(contents, embeddings)))
+                data_tuples = []
+                for title, content, page_url, embedding in zip(titles, contents, page_urls, embeddings):
+                    data_tuples.append((title, content, page_url, embedding))
+                
+                cur.executemany(query, data_tuples)
                 conn.commit()
 
     def remove_document(self, table: str, doc_id):
@@ -74,7 +78,7 @@ class Database:
                     similarity_calc = f"ROUND(((1 - (embedding {operator} %s::vector)) * 100)::numeric, 2) as similarity_percent"
                 
                 query = f"""
-                SELECT id, content, {similarity_calc}
+                SELECT id, title, content, {similarity_calc}
                 FROM {table}
                 ORDER BY embedding {operator} %s::vector
                 LIMIT %s
@@ -88,7 +92,9 @@ class Database:
                 query = f"""
                 CREATE TABLE IF NOT EXISTS {table} (
                     id SERIAL PRIMARY KEY,
+                    title TEXT,
                     content TEXT,
+                    page_url TEXT NULL,
                     embedding vector({dim})
                 )
                 """

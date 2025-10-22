@@ -8,6 +8,7 @@ from services.llm_service import expand_query, call_llm
 from services.search_service import rerank_documents
 import os
 from dotenv import load_dotenv
+from crawlers import Crawler
 
 from schemas.settings import (
     parse_settings,
@@ -97,6 +98,38 @@ def update_settings():
         return jsonify({"status": "success", "settings": new_settings.model_dump()}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+    
+
+@app.route("/crawl", methods=["POST", "OPTIONS"])
+def crawl_link():
+    if request.method == "OPTIONS":
+        return "", 204
+    
+    app.logger.info("Start crawling")
+
+    data = request.get_json()
+    link = data["link"]
+    crawler = Crawler()
+
+    try:
+        sections = crawler.extract(link=link)
+        app.logger.info(sections[0])
+        
+        exists = g.db.table_exists("mytable")
+        if not exists:
+            g.db.create_vector_table("mytable")
+        cleaned_docs = clean_documents([s.get('content') for s in sections])
+        vectors = text_encoder.encode(cleaned_docs)
+        contents = cleaned_docs
+        titles = [s.get('title') for s in sections]
+        page_urls = [s.get('page_url') for s in sections]
+
+        g.db.add_documents("mytable", titles, contents, page_urls, vectors)
+
+    except Exception as e:
+        app.logger.error(f"An error occurred while crowling: {e!s}")
+
+    return jsonify({"status": "success"}), 200
 
 
 @app.route("/add", methods=["POST", "OPTIONS"])
@@ -116,8 +149,10 @@ def add_documents():
     cleaned_docs = clean_documents(documents)
     vectors = text_encoder.encode(cleaned_docs)
     contents = cleaned_docs
+    titles = [f"Document {i+1}" for i in range(len(contents))]
+    page_urls = [None for _ in contents]
 
-    g.db.add_documents("mytable", contents, vectors)
+    g.db.add_documents("mytable", titles, contents, page_urls, vectors)
     
     db_type = "postgres" if g.db == pg_db else "mysql"
     return jsonify({"status": "success", "database": db_type}), 200
@@ -146,15 +181,16 @@ def search_documents():
     for r in results:
         result_dict = {
             "id": r[0], 
-            "content": r[1]
+            "title": r[1],
+            "content": r[2]
         }
         
         if metric == "cosine":
-            result_dict["similarity_percent"] = r[2]
+            result_dict["similarity_percent"] = r[3]
         elif metric == "l2":
-            result_dict["l2_distance"] = r[2]
+            result_dict["l2_distance"] = r[3]
         elif metric == "inner_product":
-            result_dict["inner_product_score"] = r[2]
+            result_dict["inner_product_score"] = r[3]
         
         serializable_results.append(result_dict)
     
@@ -192,9 +228,28 @@ def prompt_llm():
     n_k_documents = [g.db.search("mytable", vector, metric="cosine", limit=5) for vector in encoded_queries]
     
     n_k_documents = [item for sublist in n_k_documents for item in sublist]
-    n_k_documents = list(set(n_k_documents))
     
-    k_documents = rerank_documents(query, docs=n_k_documents, top_k=5)
+    unique_docs = {}
+    for doc in n_k_documents:
+        doc_id = doc[0]
+        similarity = doc[3]
+        
+        if doc_id not in unique_docs or similarity > unique_docs[doc_id][3]:
+            unique_docs[doc_id] = doc
+    
+    n_k_documents = list(unique_docs.values())
+
+    k_documents_tuples = rerank_documents(query, docs=n_k_documents, top_k=5)
+    
+    k_documents = []
+    for doc_tuple in k_documents_tuples:
+        document = {
+            "id": doc_tuple[0],
+            "title": doc_tuple[1], 
+            "content": doc_tuple[2],
+            "similarity_percent": doc_tuple[3]
+        }
+        k_documents.append(document)
     
     answer = call_llm(
         query, 
@@ -204,7 +259,7 @@ def prompt_llm():
         api_key=api_key
     )
 
-    return jsonify({"answer": answer})
+    return jsonify({"answer": answer, "docs": k_documents})
 
 
 if __name__ == "__main__":

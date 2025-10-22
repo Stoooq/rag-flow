@@ -5,9 +5,11 @@ import SearchDocuments from "./components/search-documents";
 import Settings from "./components/settings";
 import PromptModel from "./components/prompt-model";
 import { DatabaseType, LLMProvider, PostgresMetric, type SettingsType } from "./types/settings";
+import WebCrawler from "./components/web-crawler";
 
 interface SearchResult {
   id: number;
+  title: string;
   content: string;
   similarity_percent?: number;
 }
@@ -17,6 +19,7 @@ function App() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [prompt, setPrompt] = useState<string | "">("");
+  const [url, setUrl] = useState("");
   const [settings, setSettings] = useState<SettingsType>({
     database: DatabaseType.Postgres,
     metric: PostgresMetric.Cosine,
@@ -26,6 +29,7 @@ function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isPrompting, setIsPrompting] = useState(false);
+  const [isCrawling, setIsCrawling] = useState(false);
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -39,6 +43,10 @@ function App() {
 
   const handlePromptChange = (e: ChangeEvent<HTMLInputElement>) => {
     setPrompt(e.target.value);
+  };
+
+  const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
   };
 
   const saveSettings = async (newSettings: SettingsType) => {
@@ -123,10 +131,35 @@ function App() {
       });
       const data = await res.json();
       console.log(data.answer);
+      console.log(data.docs);
     } catch (error) {
       console.error("Error prompting model:", error);
     } finally {
       setIsPrompting(false);
+    }
+  };
+
+  const crawlWebsite = async () => {
+    if (!url.trim()) return;
+
+    setIsCrawling(true);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link: url }),
+      });
+
+      if (response.ok) {
+        setUrl("");
+        console.log("Website crawled successfully");
+      } else {
+        console.error("Failed to crawl website");
+      }
+    } catch (error) {
+      console.error("Error crawling website:", error);
+    } finally {
+      setIsCrawling(false);
     }
   };
 
@@ -136,6 +169,12 @@ function App() {
         settings={settings}
         onSaveSettings={saveSettings}
         isSaving={isSaving}
+      />
+      <WebCrawler 
+        url={url}
+        onUrlChange={handleUrlChange}
+        onCrawl={crawlWebsite}
+        isCrawling={isCrawling}
       />
       <div className="grid grid-cols-2 gap-8">
         <AddDocuments

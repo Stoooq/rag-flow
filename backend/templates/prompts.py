@@ -29,9 +29,9 @@ class QueryExpansionTemplate:
 
 class RAGPromptTemplate:
     @staticmethod
-    def create_prompt(query: str, documents: list[tuple]) -> str:
+    def create_prompt(query: str, documents: list[dict]) -> str:
         context = "\n".join([
-            f"Document ID: {doc[0]}\nContent: {doc[1]}" 
+            f"Document ID: {doc.get('id')}\nContent: {doc.get('content')}" 
             for doc in documents
         ])
         
