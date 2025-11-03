@@ -22,11 +22,13 @@ class PostgresSettings(BaseModel):
     database: Literal[DatabaseType.postgres]
     metric: PostgresMetric
     llmProvider: LLMProvider
+    textEncoder: str = "all-MiniLM-L6-v2"
 
 class MySQLSettings(BaseModel):
     database: Literal[DatabaseType.mysql]
     metric: MySQLMetric
     llmProvider: LLMProvider
+    textEncoder: str = "all-MiniLM-L6-v2"
 
 Settings = Union[PostgresSettings, MySQLSettings]
 

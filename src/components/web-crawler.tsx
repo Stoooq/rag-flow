@@ -13,25 +13,22 @@ interface WebCrawlerProps {
 function WebCrawler({ url, onUrlChange, onCrawl, isCrawling = false }: WebCrawlerProps) {
   return (
     <Card>
-        <CardHeader>
+      <CardHeader>
         <CardTitle>Web Content Crawler</CardTitle>
         <CardDescription>
-          Enter website URLs to automatically crawl and extract content. The crawler will fetch web pages and convert them into documents for semantic search.
+          Enter website URLs to automatically crawl and extract content. The crawler will fetch web
+          pages and convert them into documents for semantic search.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex gap-4">
-          <Input 
+          <Input
             value={url}
             onChange={onUrlChange}
             placeholder="Enter website URL to crawl (e.g., https://example.com)"
             className="flex-1"
           />
-          <Button 
-            variant="my"
-            onClick={onCrawl}
-            disabled={!url.trim() || isCrawling}
-          >
+          <Button variant="my" onClick={onCrawl} disabled={!url.trim() || isCrawling}>
             {isCrawling ? "Crawling..." : "Crawl"}
           </Button>
         </div>

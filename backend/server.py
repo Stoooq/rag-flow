@@ -82,6 +82,21 @@ def setup_database():
         g.db = pg_db
 
 
+@app.route("/load-settings", methods=["GET", "OPTIONS"])
+def load_settings():
+    if request.method == "OPTIONS":
+        return "", 204
+
+    app.logger.info("Start loading settings")
+
+    try:
+        current_settings = settings_store.get_settings()
+        app.logger.info(current_settings)
+        return jsonify({"status": "success", "settings": current_settings.model_dump()}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+
 @app.route("/update-settings", methods=["POST", "OPTIONS"])
 def update_settings():
     if request.method == "OPTIONS":
@@ -94,6 +109,19 @@ def update_settings():
         settings_data = payload.get("settings", payload)
         
         new_settings = parse_settings(settings_data)
+        
+        if hasattr(new_settings, 'textEncoder'):
+            try:
+                app.logger.info(f"Updating text encoder to model: {new_settings.textEncoder}")
+                text_encoder.update_model(new_settings.textEncoder)
+                app.logger.info("Text encoder updated successfully")
+            except Exception as encoder_error:
+                app.logger.error(f"Failed to update text encoder: {encoder_error}")
+                return jsonify({
+                    "status": "error", 
+                    "message": f"Failed to load text encoder model '{new_settings.textEncoder}': {str(encoder_error)}"
+                }), 400
+        
         settings_store.set_settings(new_settings)
         return jsonify({"status": "success", "settings": new_settings.model_dump()}), 200
     except Exception as e:
@@ -113,25 +141,24 @@ def crawl_link():
 
     try:
         sections = crawler.extract(link=link)
-        app.logger.info(sections[0])
-        
         exists = g.db.table_exists("mytable")
         if not exists:
             g.db.create_vector_table("mytable")
-        cleaned_docs = clean_documents([s.get('content') for s in sections])
+        cleaned_docs = clean_documents([s.get('text') for s in sections])
         vectors = text_encoder.encode(cleaned_docs)
         contents = cleaned_docs
         titles = [s.get('title') for s in sections]
         page_urls = [s.get('page_url') for s in sections]
 
         g.db.add_documents("mytable", titles, contents, page_urls, vectors)
-
+        return jsonify({"status": "success", "titles": titles}), 200
     except Exception as e:
-        app.logger.error(f"An error occurred while crowling: {e!s}")
-
-    return jsonify({"status": "success"}), 200
-
-
+        app.logger.error(f"An error occurred while crawling: {e!s}")
+        return jsonify({"status": "error", "message": str(e)}), 400
+    finally:
+        if crawler:
+            crawler.close()
+    
 @app.route("/add", methods=["POST", "OPTIONS"])
 def add_documents():
     if request.method == "OPTIONS":
@@ -194,12 +221,11 @@ def search_documents():
         
         serializable_results.append(result_dict)
     
-    app.logger.info(serializable_results)
     return jsonify({
         "results": serializable_results,
         "metric_used": metric,
         "total_results": len(serializable_results)
-    })
+    }), 200
 
 
 @app.route("/prompt", methods=["POST", "OPTIONS"])
@@ -212,15 +238,16 @@ def prompt_llm():
     data = request.get_json()
     query = data["prompt"]
     
-    provider = data.get("provider", "ollama")
-    model_name = data.get("model")
+    current_settings = settings_store.get_settings()
+    provider = current_settings.llmProvider
+
     api_key = data.get("apiKey")
     
     queries = expand_query(
         query, 
         expand_to_n=4, 
         provider=provider, 
-        model_name=model_name, 
+        model_name="", 
         api_key=api_key
     )
     
@@ -255,11 +282,11 @@ def prompt_llm():
         query, 
         documents=k_documents, 
         provider=provider,
-        model_name=model_name, 
+        model_name="", 
         api_key=api_key
     )
 
-    return jsonify({"answer": answer, "docs": k_documents})
+    return jsonify({"answer": answer, "docs": k_documents}), 200
 
 
 if __name__ == "__main__":

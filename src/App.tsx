@@ -20,12 +20,7 @@ function App() {
   const [results, setResults] = useState<SearchResult[]>([]);
   const [prompt, setPrompt] = useState<string | "">("");
   const [url, setUrl] = useState("");
-  const [settings, setSettings] = useState<SettingsType>({
-    database: DatabaseType.Postgres,
-    metric: PostgresMetric.Cosine,
-    llmProvider: LLMProvider.Ollama,
-  });
-  const [isSaving, setIsSaving] = useState(false);
+
   const [isUploading, setIsUploading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isPrompting, setIsPrompting] = useState(false);
@@ -49,25 +44,27 @@ function App() {
     setUrl(e.target.value);
   };
 
-  const saveSettings = async (newSettings: SettingsType) => {
-    setIsSaving(true);
+  const crawlWebsite = async () => {
+    if (!url.trim()) return;
+
+    setIsCrawling(true);
     try {
-      const response = await fetch("http://127.0.0.1:8000/update-settings", {
+      const response = await fetch("http://127.0.0.1:8000/crawl", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: newSettings }),
+        body: JSON.stringify({ link: url }),
       });
 
       if (response.ok) {
-        setSettings(newSettings);
-        console.log("Settings saved");
+        setUrl("");
+        console.log("Website crawled successfully");
       } else {
-        console.error("Failed to save settings");
+        console.error("Failed to crawl website");
       }
     } catch (error) {
-      console.error("Error saving settings:", error);
+      console.error("Error crawling website:", error);
     } finally {
-      setIsSaving(false);
+      setIsCrawling(false);
     }
   };
 
@@ -127,7 +124,7 @@ function App() {
       const res = await fetch("http://127.0.0.1:8000/prompt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt, provider: settings?.llmProvider, model: "", apiKey: null }),
+        body: JSON.stringify({ prompt: prompt, apiKey: null }),
       });
       const data = await res.json();
       console.log(data.answer);
@@ -139,38 +136,10 @@ function App() {
     }
   };
 
-  const crawlWebsite = async () => {
-    if (!url.trim()) return;
-
-    setIsCrawling(true);
-    try {
-      const response = await fetch("http://127.0.0.1:8000/crawl", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ link: url }),
-      });
-
-      if (response.ok) {
-        setUrl("");
-        console.log("Website crawled successfully");
-      } else {
-        console.error("Failed to crawl website");
-      }
-    } catch (error) {
-      console.error("Error crawling website:", error);
-    } finally {
-      setIsCrawling(false);
-    }
-  };
-
   return (
     <div className="w-full flex flex-col p-12 gap-12">
-      <Settings 
-        settings={settings}
-        onSaveSettings={saveSettings}
-        isSaving={isSaving}
-      />
-      <WebCrawler 
+      <Settings />
+      <WebCrawler
         url={url}
         onUrlChange={handleUrlChange}
         onCrawl={crawlWebsite}

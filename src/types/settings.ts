@@ -19,17 +19,18 @@ export enum LLMProvider {
 }
 
 interface SettingsBase {
-  llmProvider: LLMProviderEnum
+  llmProvider: LLMProvider;
+  textEncoder: string;
 }
 
 interface PostgresSettings extends SettingsBase {
-  database: DatabaseEnum.Postgres
-  metric: PostgresMetric
+  database: DatabaseType.Postgres;
+  metric: PostgresMetric;
 }
 
 interface MySQLSettings extends SettingsBase {
-  database: DatabaseEnum.MySQL
-  metric: MySQLMetric
+  database: DatabaseType.MySQL;
+  metric: MySQLMetric;
 }
 
 export type SettingsType = PostgresSettings | MySQLSettings

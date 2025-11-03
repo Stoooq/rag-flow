@@ -1,32 +1,39 @@
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
-import prettierPlugin from 'eslint-plugin-prettier'
-import prettierConfig from 'eslint-config-prettier'
+import typescriptParser from '@typescript-eslint/parser';
+import typescriptPlugin from '@typescript-eslint/eslint-plugin';
+import reactPlugin from 'eslint-plugin-react';
+import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import prettierPlugin from 'eslint-plugin-prettier';
 
-export default defineConfig([
-  globalIgnores(['dist']),
+export default [
+  // ignore the config file itself (and node_modules, dist)
   {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs['recommended-latest'],
-      reactRefresh.configs.vite,
-      prettierConfig,
-    ],
-    plugins: {
-      prettier: prettierPlugin,
-    },
-    languageOptions: {
-      ecmaVersion: 2020,
-      globals: globals.browser,
-    },
-    rules: {
-      'prettier/prettier': 'warn',
-    },
+    ignores: ['eslint.config.js', 'node_modules/**', 'dist/**']
   },
-])
+
+  // main config for TS/TSX/JSX/JS
+  {
+    files: ['**/*.{ts,tsx,js,jsx}'],
+    languageOptions: {
+      parser: typescriptParser,
+      parserOptions: {
+        ecmaVersion: 2020,
+        sourceType: 'module',
+        ecmaFeatures: { jsx: true },
+        project: ['./tsconfig.json']
+      }
+    },
+    plugins: {
+      '@typescript-eslint': typescriptPlugin,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      prettier: prettierPlugin
+    },
+    settings: { react: { version: 'detect' } },
+    rules: {
+      'quotes': 'off',
+      'prettier/prettier': 'error',
+      'react/prop-types': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off'
+    }
+  }
+];

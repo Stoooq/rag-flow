@@ -11,17 +11,61 @@ import {
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { useState } from "react";
-import { DatabaseType, LLMProvider, PostgresMetric, MySQLMetric, type SettingsType } from "../types/settings";
+import { useEffect, useState } from "react";
+import {
+  DatabaseType,
+  LLMProvider,
+  PostgresMetric,
+  MySQLMetric,
+  type SettingsType,
+} from "../types/settings";
 
-interface SettingsProps {
-  settings: SettingsType;
-  onSaveSettings: (settings: SettingsType) => Promise<void>;
-  isSaving?: boolean;
-}
+function Settings() {
+  const [isSaving, setIsSaving] = useState(false);
+  const [localSettings, setLocalSettings] = useState<SettingsType | null>(null);
 
-function Settings({ settings, onSaveSettings, isSaving = false }: SettingsProps) {
-  const [localSettings, setLocalSettings] = useState<SettingsType>(settings);
+  const loadSettings = async () => {
+    console.log("COS");
+    try {
+      const response = await fetch("http://127.0.0.1:8000/load-settings", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await response.json();
+      setLocalSettings(data.settings);
+    } catch (error) {
+      console.error("Error loading settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const saveSettings = async (newSettings: SettingsType) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/update-settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ settings: newSettings }),
+      });
+
+      if (response.ok) {
+        setLocalSettings(newSettings);
+        console.log("Settings saved");
+      } else {
+        console.error("Failed to save settings");
+      }
+    } catch (error) {
+      console.error("Error saving settings:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -30,95 +74,136 @@ function Settings({ settings, onSaveSettings, isSaving = false }: SettingsProps)
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Application Settings</DialogTitle>
-          <DialogDescription>Configure your database, metrics and LLM provider preferences.</DialogDescription>
+          <DialogDescription>
+            Configure your database, metrics and LLM provider preferences.
+          </DialogDescription>
         </DialogHeader>
-        <div className="space-y-6">
-          <div>
-            <Label className="text-base font-medium">Database</Label>
-            <RadioGroup 
-              value={localSettings.database} 
-              onValueChange={(value) => setLocalSettings({
-                ...localSettings,
-                database: value as DatabaseType,
-                metric: value === DatabaseType.Postgres ? PostgresMetric.Cosine : MySQLMetric.Cosine
-              })}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={DatabaseType.Postgres} id="postgres" />
-                <Label htmlFor="postgres">PostgreSQL</Label>
+        {localSettings === null ? (
+          <>Loading</>
+        ) : (
+          <>
+            <div className="space-y-6">
+              <div>
+                <Label className="text-base font-medium">Text encoder model</Label>
+                <p className="text-sm text-muted-foreground">
+                  Enter a model name from Hugging Face (e.g.,
+                  sentence-transformers/all-MiniLM-L6-v2)
+                </p>
+                <Input
+                  value={localSettings.textEncoder}
+                  onChange={(e) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      textEncoder: e.target.value,
+                    })
+                  }
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={DatabaseType.MySQL} id="mysql" />
-                <Label htmlFor="mysql">MySQL</Label>
-              </div>
-            </RadioGroup>
-          </div>
 
-          <div>
-            <Label className="text-base font-medium">Metric</Label>
-            <RadioGroup 
-              value={localSettings.metric} 
-              onValueChange={(value) => setLocalSettings({
-                ...localSettings,
-                metric: value as any
-              })}
-            >
-              {localSettings.database === DatabaseType.Postgres ? (
-                <>
+              <div>
+                <Label className="text-base font-medium">Database</Label>
+                <RadioGroup
+                  value={localSettings.database}
+                  onValueChange={(value) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      database: value,
+                      metric:
+                        value === DatabaseType.Postgres
+                          ? PostgresMetric.Cosine
+                          : MySQLMetric.Cosine,
+                    } as SettingsType)
+                  }
+                >
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={PostgresMetric.Cosine} id="cosine" />
-                    <Label htmlFor="cosine">Cosine</Label>
+                    <RadioGroupItem value={DatabaseType.Postgres} id="postgres" />
+                    <Label htmlFor="postgres">PostgreSQL</Label>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={PostgresMetric.L2} id="l2" />
-                    <Label htmlFor="l2">L2</Label>
+                    <RadioGroupItem value={DatabaseType.MySQL} id="mysql" />
+                    <Label htmlFor="mysql">MySQL</Label>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={MySQLMetric.Cosine} id="cosine" />
-                    <Label htmlFor="cosine">Cosine</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value={MySQLMetric.L2} id="l2" />
-                    <Label htmlFor="l2">L2</Label>
-                  </div>
-                </>
-              )}
-            </RadioGroup>
-          </div>
+                </RadioGroup>
+              </div>
 
-          <div>
-            <Label className="text-base font-medium">LLM Provider</Label>
-            <RadioGroup 
-              value={localSettings.llmProvider} 
-              onValueChange={(value) => setLocalSettings({
-                ...localSettings,
-                llmProvider: value as LLMProvider
-              })}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={LLMProvider.Ollama} id="ollama" />
-                <Label htmlFor="ollama">Ollama</Label>
+              <div>
+                <Label className="text-base font-medium">Metric</Label>
+                <RadioGroup
+                  value={localSettings.metric}
+                  onValueChange={(value) => {
+                    if (localSettings.database === DatabaseType.Postgres) {
+                      setLocalSettings({
+                        ...localSettings,
+                        metric: value as PostgresMetric,
+                      });
+                    } else {
+                      setLocalSettings({
+                        ...localSettings,
+                        metric: value as MySQLMetric,
+                      });
+                    }
+                  }}
+                >
+                  {localSettings.database === DatabaseType.Postgres ? (
+                    <>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value={PostgresMetric.Cosine} id="cosine" />
+                        <Label htmlFor="cosine">Cosine</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value={PostgresMetric.L2} id="l2" />
+                        <Label htmlFor="l2">L2</Label>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value={MySQLMetric.Cosine} id="cosine" />
+                        <Label htmlFor="cosine">Cosine</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value={MySQLMetric.L2} id="l2" />
+                        <Label htmlFor="l2">L2</Label>
+                      </div>
+                    </>
+                  )}
+                </RadioGroup>
               </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value={LLMProvider.OpenAI} id="openai" />
-                <Label htmlFor="openai">OpenAI</Label>
+
+              <div>
+                <Label className="text-base font-medium">LLM Provider</Label>
+                <RadioGroup
+                  value={localSettings.llmProvider}
+                  onValueChange={(value) =>
+                    setLocalSettings({
+                      ...localSettings,
+                      llmProvider: value as LLMProvider,
+                    })
+                  }
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value={LLMProvider.Ollama} id="ollama" />
+                    <Label htmlFor="ollama">Ollama</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value={LLMProvider.OpenAI} id="openai" />
+                    <Label htmlFor="openai">OpenAI</Label>
+                  </div>
+                </RadioGroup>
               </div>
-            </RadioGroup>
-          </div>
-        </div>
-        <DialogFooter className="sm:justify-start">
-          <Button 
-            type="button" 
-            variant="my"
-            onClick={() => onSaveSettings(localSettings)}
-            disabled={isSaving}
-          >
-            Save Settings
-          </Button>
-        </DialogFooter>
+            </div>
+            <DialogFooter className="sm:justify-start">
+              <Button
+                type="button"
+                variant="my"
+                onClick={() => saveSettings(localSettings)}
+                disabled={isSaving}
+              >
+                Save Settings
+              </Button>
+            </DialogFooter>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );

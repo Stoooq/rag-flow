@@ -49,7 +49,9 @@ function AddDocuments({
               </div>
             </div>
           ) : (
-            <div className="h-full w-full flex justify-center items-center text-muted-foreground text-sm">No files uploaded</div>
+            <div className="h-full w-full flex justify-center items-center text-muted-foreground text-sm">
+              No files uploaded
+            </div>
           )}
         </div>
       </CardContent>
