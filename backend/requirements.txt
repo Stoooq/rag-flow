@@ -1,0 +1,6 @@
+flask
+flask-cors
+psycopg
+python-dotenv
+sentence-transformers
+numpy

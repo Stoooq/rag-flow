@@ -4,7 +4,6 @@ import AddDocuments from "./components/add-documents";
 import SearchDocuments from "./components/search-documents";
 import Settings from "./components/settings";
 import PromptModel from "./components/prompt-model";
-import { DatabaseType, LLMProvider, PostgresMetric, type SettingsType } from "./types/settings";
 import WebCrawler from "./components/web-crawler";
 
 interface SearchResult {
