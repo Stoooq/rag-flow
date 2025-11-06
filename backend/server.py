@@ -158,7 +158,8 @@ def crawl_link():
     finally:
         if crawler:
             crawler.close()
-    
+
+
 @app.route("/add", methods=["POST", "OPTIONS"])
 def add_documents():
     if request.method == "OPTIONS":
@@ -240,6 +241,7 @@ def prompt_llm():
     
     current_settings = settings_store.get_settings()
     provider = current_settings.llmProvider
+    app.logger.info(provider)
 
     api_key = data.get("apiKey")
     

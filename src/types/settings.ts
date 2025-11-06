@@ -15,7 +15,8 @@ export enum MySQLMetric {
 
 export enum LLMProvider {
   Ollama = 'ollama',
-  OpenAI = 'openai'
+  OpenAI = 'openai',
+  Domdata = 'domdata',
 }
 
 interface SettingsBase {

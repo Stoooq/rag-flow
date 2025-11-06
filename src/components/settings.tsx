@@ -25,7 +25,7 @@ function Settings() {
   const [localSettings, setLocalSettings] = useState<SettingsType | null>(null);
 
   const loadSettings = async () => {
-    console.log("COS");
+    console.log("settings loaded");
     try {
       const response = await fetch("http://127.0.0.1:8000/load-settings", {
         method: "GET",
@@ -188,6 +188,10 @@ function Settings() {
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value={LLMProvider.OpenAI} id="openai" />
                     <Label htmlFor="openai">OpenAI</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value={LLMProvider.Domdata} id="domdata" />
+                    <Label htmlFor="domdata">Domdata</Label>
                   </div>
                 </RadioGroup>
               </div>

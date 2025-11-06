@@ -1,6 +1,5 @@
 from sentence_transformers import CrossEncoder
 
-
 def rerank_documents(query: str, docs: list[tuple], top_k: int) -> list[tuple]:
     model = CrossEncoder(model_name_or_path="cross-encoder/ms-marco-MiniLM-L-6-v2")
 

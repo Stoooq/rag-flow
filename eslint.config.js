@@ -19,7 +19,7 @@ export default [
         ecmaVersion: 2020,
         sourceType: 'module',
         ecmaFeatures: { jsx: true },
-        project: ['./tsconfig.json']
+        project: ['./tsconfig.app.json']
       }
     },
     plugins: {

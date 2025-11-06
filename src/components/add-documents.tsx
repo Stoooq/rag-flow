@@ -1,21 +1,43 @@
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
-import { type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 
-interface AddDocumentsProps {
-  files: File[] | null;
-  onFileChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  onAddDocuments: () => Promise<void>;
-  isUploading?: boolean;
-}
+function AddDocuments() {
+  const [isUploading, setIsUploading] = useState(false);
+  const [files, setFiles] = useState<File[] | null>(null);
 
-function AddDocuments({
-  files,
-  onFileChange,
-  onAddDocuments,
-  isUploading = false,
-}: AddDocumentsProps) {
+  const addDocuments = async () => {
+    if (!files) return;
+
+    setIsUploading(true);
+    try {
+      const text = await Promise.all(files.map((file) => file.text()));
+
+      const response = await fetch("http://127.0.0.1:8000/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: text }),
+      });
+
+      if (response.ok) {
+        setFiles(null);
+      } else {
+        console.error("Failed to upload documents");
+      }
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files));
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -26,7 +48,7 @@ function AddDocuments({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Input type="file" onChange={onFileChange} multiple accept=".txt,.md,.pdf" />
+        <Input type="file" onChange={handleFileChange} multiple accept=".txt,.md,.pdf" />
         <div className="flex items-stretch border-2 border-dashed w-full h-[150px] min-h-0">
           {files && files.length > 0 ? (
             <div className="w-full h-full min-h-0">
@@ -58,7 +80,7 @@ function AddDocuments({
       <CardFooter>
         <Button
           variant="my"
-          onClick={onAddDocuments}
+          onClick={addDocuments}
           disabled={!files || files.length === 0 || isUploading}
         >
           {isUploading ? "Uploading..." : "Add Documents"}

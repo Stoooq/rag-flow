@@ -2,15 +2,40 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Input } from "./ui/input";
 import { type ChangeEvent } from "react";
+import { useState } from "react";
 
-interface WebCrawlerProps {
-  url: string;
-  onUrlChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  onCrawl: () => void;
-  isCrawling?: boolean;
-}
+function WebCrawler() {
+  const [isCrawling, setIsCrawling] = useState(false);
+  const [url, setUrl] = useState("");
 
-function WebCrawler({ url, onUrlChange, onCrawl, isCrawling = false }: WebCrawlerProps) {
+  const crawlWebsite = async () => {
+    if (!url.trim()) return;
+
+    setIsCrawling(true);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ link: url }),
+      });
+
+      if (response.ok) {
+        setUrl("");
+        console.log("Website crawled successfully");
+      } else {
+        console.error("Failed to crawl website");
+      }
+    } catch (error) {
+      console.error("Error crawling website:", error);
+    } finally {
+      setIsCrawling(false);
+    }
+  };
+
+  const handleUrlChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setUrl(e.target.value);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -24,11 +49,11 @@ function WebCrawler({ url, onUrlChange, onCrawl, isCrawling = false }: WebCrawle
         <div className="flex gap-4">
           <Input
             value={url}
-            onChange={onUrlChange}
+            onChange={handleUrlChange}
             placeholder="Enter website URL to crawl (e.g., https://example.com)"
             className="flex-1"
           />
-          <Button variant="my" onClick={onCrawl} disabled={!url.trim() || isCrawling}>
+          <Button variant="my" onClick={crawlWebsite} disabled={!url.trim() || isCrawling}>
             {isCrawling ? "Crawling..." : "Crawl"}
           </Button>
         </div>

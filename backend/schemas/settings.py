@@ -17,6 +17,7 @@ class MySQLMetric(str, Enum):
 class LLMProvider(str, Enum):
     Ollama = "ollama"
     OpenAI = "openai"
+    Domdata = "domdata"
 
 class PostgresSettings(BaseModel):
     database: Literal[DatabaseType.postgres]

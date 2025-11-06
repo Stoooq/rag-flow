@@ -9,7 +9,7 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { type ChangeEvent } from "react";
+import { useState, type ChangeEvent } from "react";
 
 interface SearchResult {
   id: number;
@@ -18,21 +18,38 @@ interface SearchResult {
   similarity_percent?: number;
 }
 
-interface SearchDocumentsProps {
-  query: string;
-  onQueryChange: (e: ChangeEvent<HTMLInputElement>) => void;
-  onSearch: () => void;
-  results: SearchResult[];
-  isSearching: boolean;
-}
+function SearchDocuments() {
+  const [isSearching, setIsSearching] = useState(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchResult[]>([]);
 
-function SearchDocuments({
-  query,
-  onQueryChange,
-  onSearch,
-  results,
-  isSearching = false,
-}: SearchDocumentsProps) {
+  const searchDocuments = async () => {
+    if (!query.trim()) return;
+
+    setIsSearching(true);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: query,
+          limit: 5,
+        }),
+      });
+      const data = await res.json();
+      setResults(data.results || []);
+    } catch (error) {
+      console.error("Error searching documents:", error);
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleQueryChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -45,7 +62,7 @@ function SearchDocuments({
       <CardContent className="space-y-4">
         <Input
           value={query}
-          onChange={onQueryChange}
+          onChange={handleQueryChange}
           placeholder="Ask a question or describe what you're looking for..."
         />
         <div className="flex items-stretch border-2 border-dashed w-full h-[150px] min-h-0">
@@ -91,7 +108,7 @@ function SearchDocuments({
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="my" onClick={onSearch} disabled={!query.trim() || isSearching}>
+        <Button variant="my" onClick={searchDocuments} disabled={!query.trim() || isSearching}>
           {isSearching ? "Searching..." : "Search Documents"}
         </Button>
       </CardFooter>
