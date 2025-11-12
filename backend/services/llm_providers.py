@@ -38,7 +38,7 @@ class DomdataProvider(LLMProvider):
         collected_chunks = []
         for line in response.iter_lines(decode_unicode=True):
             line_str = line.strip()
-            if line_str.startsWith("data: "):
+            if line_str.startswith("data: "):
                 data_str = line_str[len("data: "):]
                 data_json = json.loads(data_str)
                 if "chunks" in data_json:
@@ -60,7 +60,7 @@ class DomdataProvider(LLMProvider):
                     "content": [
                         {
                             "type": "text",
-                            "text": "Odpowiedz na zadane pytanie uytkownika lub wykonaj jego zadanie"
+                            "text": "Odpowiedz na zadane pytanie uytkownika"
                         }
                     ]
                 },

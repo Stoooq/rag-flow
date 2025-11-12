@@ -64,7 +64,7 @@ function PromptModel() {
           placeholder="Ask a question about your documents..."
         />
         {answer && <div className="p-4">{answer}</div>}
-        {docs && docs.length > 0 ? (
+        {docs && docs.length > 0 && (
           <div className="w-full h-[150px] min-h-0">
             <div className="w-full h-full min-h-0 overflow-x-auto overflow-y-hidden">
               <div className="flex h-full items-stretch w-max space-x-4 p-2">
@@ -95,10 +95,6 @@ function PromptModel() {
                 ))}
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="h-full w-full flex justify-center items-center text-muted-foreground text-sm">
-            No files uploaded
           </div>
         )}
       </CardContent>

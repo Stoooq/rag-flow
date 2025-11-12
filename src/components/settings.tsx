@@ -21,6 +21,7 @@ import {
 } from "../types/settings";
 
 function Settings() {
+  const [isOpen, setIsOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [localSettings, setLocalSettings] = useState<SettingsType | null>(null);
 
@@ -52,6 +53,7 @@ function Settings() {
       if (response.ok) {
         setLocalSettings(newSettings);
         console.log("Settings saved");
+        setIsOpen(false);
       } else {
         console.error("Failed to save settings");
       }
@@ -67,7 +69,7 @@ function Settings() {
   }, []);
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button variant="shadow">Settings</Button>
       </DialogTrigger>
