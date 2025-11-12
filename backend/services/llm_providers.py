@@ -22,8 +22,8 @@ class LLMProvider(ABC):
 
 
 class DomdataProvider(LLMProvider):
-    def __init__(self, model_name: str = "domdata", temperature: float = 0.0):
-        super().__init__(model_name, temperature)
+    def __init__(self, model_name: str = "domdata", temperature: float = 0.0, api_key: Optional[str] = None):
+        super().__init__(model_name, temperature, api_key)
 
         self.key = os.getenv("DOMDATA_MODEL_TOKEN")
         if not self.key:
@@ -33,6 +33,7 @@ class DomdataProvider(LLMProvider):
         if not self.url:
             raise ValueError("API key required")
         
+    @staticmethod
     def parse_streaming_response(response):
         collected_chunks = []
         for line in response.iter_lines(decode_unicode=True):
@@ -59,14 +60,23 @@ class DomdataProvider(LLMProvider):
                     "content": [
                         {
                             "type": "text",
-                            "text": {prompt}
+                            "text": "Odpowiedz na zadane pytanie uytkownika lub wykonaj jego zadanie"
+                        }
+                    ]
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": prompt
                         }
                     ]
                 }
             ],
             "model_settings": {
                 "name": "speakleash/Bielik-11B-v2.2-Instruct-FP8",
-                "temperature": {self.temperature},
+                "temperature": float(self.temperature),
                 "min_new_tokens": 5,
                 "max_new_tokens": 500
             },
