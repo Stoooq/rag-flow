@@ -197,6 +197,31 @@ function Settings() {
                   </div>
                 </RadioGroup>
               </div>
+
+              {localSettings.llmProvider === LLMProvider.OpenAI && (
+                <div className="border-t pt-4">
+                  <Label className="text-base font-medium">OpenAI API Key</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Enter your OpenAI API key (starts with sk-)
+                  </p>
+                  <Input
+                    type="password"
+                    placeholder="sk-..."
+                    value={localSettings.openAiApiKey || ""}
+                    onChange={(e) =>
+                      setLocalSettings({
+                        ...localSettings,
+                        openAiApiKey: e.target.value,
+                      })
+                    }
+                  />
+                  {localSettings.openAiApiKey && !localSettings.openAiApiKey.startsWith("sk-") && (
+                    <p className="text-sm text-destructive mt-1">
+                      OpenAI API keys typically start with "sk-"
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
             <DialogFooter className="sm:justify-start">
               <Button

@@ -22,6 +22,7 @@ export enum LLMProvider {
 interface SettingsBase {
   llmProvider: LLMProvider;
   textEncoder: string;
+  openAiApiKey: string;
 }
 
 interface PostgresSettings extends SettingsBase {

@@ -27,7 +27,7 @@ load_dotenv()
 DEFAULT_SETTINGS = PostgresSettings(
     database=DatabaseType.postgres,
     metric=PostgresMetric.cosine,
-    llmProvider=LLMProvider.Ollama
+    llmProvider=LLMProvider.Ollama,
 )
 
 pg_db = Database(
@@ -112,9 +112,8 @@ def update_settings():
         
         if hasattr(new_settings, 'textEncoder'):
             try:
-                app.logger.info(f"Updating text encoder to model: {new_settings.textEncoder}")
                 text_encoder.update_model(new_settings.textEncoder)
-                app.logger.info("Text encoder updated successfully")
+                app.logger.info("Text encoder updated successfully", new_settings.textEncoder)
             except Exception as encoder_error:
                 app.logger.error(f"Failed to update text encoder: {encoder_error}")
                 return jsonify({
@@ -241,16 +240,16 @@ def prompt_llm():
     
     current_settings = settings_store.get_settings()
     provider = current_settings.llmProvider
+    api_key = current_settings.openAiApiKey
     app.logger.info(provider)
-
-    api_key = data.get("apiKey")
+    app.logger.info(api_key)
     
     queries = expand_query(
         query, 
         expand_to_n=4, 
         provider=provider, 
         model_name="", 
-        api_key=api_key
+        api_key=api_key if provider == LLMProvider.OpenAI else None
     )
     
     encoded_queries = text_encoder.encode(queries)

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Union, Literal
+from typing import Union, Literal, Optional
 from pydantic import BaseModel
 
 class DatabaseType(str, Enum):
@@ -24,12 +24,14 @@ class PostgresSettings(BaseModel):
     metric: PostgresMetric
     llmProvider: LLMProvider
     textEncoder: str = "all-MiniLM-L6-v2"
+    openAiApiKey: Optional[str] = None
 
 class MySQLSettings(BaseModel):
     database: Literal[DatabaseType.mysql]
     metric: MySQLMetric
     llmProvider: LLMProvider
     textEncoder: str = "all-MiniLM-L6-v2"
+    openAiApiKey: Optional[str] = None
 
 Settings = Union[PostgresSettings, MySQLSettings]
 
