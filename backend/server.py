@@ -141,16 +141,16 @@ def crawl_link():
 
     try:
         sections = crawler.extract(link=link)
-        exists = g.db.table_exists("mytable")
+        exists = g.db.table_exists("glo_table")
         if not exists:
-            g.db.create_vector_table("mytable")
+            g.db.create_vector_table("glo_table")
         cleaned_docs = clean_documents([s.get('text') for s in sections])
         vectors = text_encoder.encode(cleaned_docs)
         contents = cleaned_docs
         titles = [s.get('title') for s in sections]
         page_urls = [s.get('page_url') for s in sections]
 
-        g.db.add_documents("mytable", titles, contents, page_urls, vectors)
+        g.db.add_documents("glo_table", titles, contents, page_urls, vectors)
         return jsonify({"status": "success", "titles": titles}), 200
     except Exception as e:
         app.logger.error(f"An error occurred while crawling: {e!s}")
@@ -170,9 +170,9 @@ def add_documents():
     data = request.get_json()
     documents = data["contents"]
 
-    exists = g.db.table_exists("mytable")
+    exists = g.db.table_exists("glo_table")
     if not exists:
-        g.db.create_vector_table("mytable")
+        g.db.create_vector_table("glo_table")
 
     cleaned_docs = clean_documents(documents)
     vectors = text_encoder.encode(cleaned_docs)
@@ -180,7 +180,7 @@ def add_documents():
     titles = [f"Document {i+1}" for i in range(len(contents))]
     page_urls = [None for _ in contents]
 
-    g.db.add_documents("mytable", titles, contents, page_urls, vectors)
+    g.db.add_documents("glo_table", titles, contents, page_urls, vectors)
     
     db_type = "postgres" if g.db == pg_db else "mysql"
     return jsonify({"status": "success", "database": db_type}), 200
@@ -203,7 +203,7 @@ def search_documents():
     cleaned_query = clean_text(query)
     vector = text_encoder.encode(cleaned_query)[0]
 
-    results = g.db.search("mytable", vector, metric=metric, limit=limit)
+    results = g.db.search("glo_table", vector, metric=metric, limit=limit)
     
     serializable_results = []
     for r in results:
@@ -254,7 +254,7 @@ def prompt_llm():
     )
     
     encoded_queries = text_encoder.encode(queries)
-    n_k_documents = [g.db.search("mytable", vector, metric="cosine", limit=5) for vector in encoded_queries]
+    n_k_documents = [g.db.search("glo_table", vector, metric="cosine", limit=5) for vector in encoded_queries]
     
     n_k_documents = [item for sublist in n_k_documents for item in sublist]
     
