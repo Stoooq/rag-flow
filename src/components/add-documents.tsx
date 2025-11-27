@@ -14,7 +14,9 @@ function AddDocuments() {
     try {
       const text = await Promise.all(files.map((file) => file.text()));
 
-      const response = await fetch("http://127.0.0.1:8000/add", {
+      const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+
+      const response = await fetch(`${APP_URL}/add`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contents: text }),

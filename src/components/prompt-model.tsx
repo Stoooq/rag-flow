@@ -24,12 +24,14 @@ function PromptModel() {
   const [docs, setDocs] = useState<Document[] | []>([]);
   const [isPrompting, setIsPrompting] = useState(false);
 
+  const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+
   const promptModel = async () => {
     if (!prompt.trim()) return;
 
     setIsPrompting(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/prompt", {
+      const res = await fetch(`${APP_URL}/prompt`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: prompt, apiKey: null }),

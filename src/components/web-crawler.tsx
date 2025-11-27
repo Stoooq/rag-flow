@@ -11,9 +11,11 @@ function WebCrawler() {
   const crawlWebsite = async () => {
     if (!url.trim()) return;
 
+    const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+
     setIsCrawling(true);
     try {
-      const response = await fetch("http://127.0.0.1:8000/crawl", {
+      const response = await fetch(`${APP_URL}/crawl`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ link: url }),

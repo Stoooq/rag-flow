@@ -25,10 +25,12 @@ function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [localSettings, setLocalSettings] = useState<SettingsType | null>(null);
 
+  const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+
   const loadSettings = async () => {
     console.log("settings loaded");
     try {
-      const response = await fetch("http://127.0.0.1:8000/load-settings", {
+      const response = await fetch(`${APP_URL}/load-settings`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });

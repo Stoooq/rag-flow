@@ -26,9 +26,11 @@ function SearchDocuments() {
   const searchDocuments = async () => {
     if (!query.trim()) return;
 
+    const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+
     setIsSearching(true);
     try {
-      const res = await fetch("http://127.0.0.1:8000/search", {
+      const res = await fetch(`${APP_URL}/search`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
