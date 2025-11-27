@@ -14,7 +14,7 @@ function AddDocuments() {
     try {
       const text = await Promise.all(files.map((file) => file.text()));
 
-      const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+      const APP_URL = import.meta.env.VITE_APP_URL || "http://127.0.0.1:8000";
 
       const response = await fetch(`${APP_URL}/add`, {
         method: "POST",

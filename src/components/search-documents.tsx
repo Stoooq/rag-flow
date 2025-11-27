@@ -26,7 +26,7 @@ function SearchDocuments() {
   const searchDocuments = async () => {
     if (!query.trim()) return;
 
-    const APP_URL = import.meta.env.APP_URL || "http://127.0.0.1:8000";
+    const APP_URL = import.meta.env.VITE_APP_URL || "http://127.0.0.1:8000";
 
     setIsSearching(true);
     try {
