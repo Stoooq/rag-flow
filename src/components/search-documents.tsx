@@ -26,7 +26,7 @@ function SearchDocuments() {
   const searchDocuments = async () => {
     if (!query.trim()) return;
 
-    const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytwkshop.domdata.at:7998";
+    const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytworkshop.domdata.at:7998";
 
     setIsSearching(true);
     try {

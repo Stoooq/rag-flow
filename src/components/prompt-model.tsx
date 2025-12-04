@@ -24,7 +24,7 @@ function PromptModel() {
   const [docs, setDocs] = useState<Document[] | []>([]);
   const [isPrompting, setIsPrompting] = useState(false);
 
-  const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytwkshop.domdata.at:7998";
+  const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytworkshop.domdata.at:7998";
 
   const promptModel = async () => {
     if (!prompt.trim()) return;

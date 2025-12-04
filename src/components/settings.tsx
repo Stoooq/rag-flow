@@ -25,7 +25,7 @@ function Settings() {
   const [isSaving, setIsSaving] = useState(false);
   const [localSettings, setLocalSettings] = useState<SettingsType | null>(null);
 
-  const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytwkshop.domdata.at:7998";
+  const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytworkshop.domdata.at:7998";
 
   const loadSettings = async () => {
     console.log("settings loaded");

@@ -11,7 +11,7 @@ function WebCrawler() {
   const crawlWebsite = async () => {
     if (!url.trim()) return;
 
-    const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytwkshop.domdata.at:7998";
+    const APP_URL = import.meta.env.VITE_APP_URL || "http://ferrytworkshop.domdata.at:7998";
 
     setIsCrawling(true);
     try {
